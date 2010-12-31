@@ -9,7 +9,7 @@ import Control.Monad
 import Network
 
 data Status = StatusOpen | StatusClose | StatusTimeout
-    deriving (Show)
+    deriving (Show, Eq)
 
 newtype HostPortStatus = HostPortStatus (HostName, PortID, Status)
 
@@ -22,47 +22,29 @@ defaultFlags = Flags
     }
 
 hps :: [(HostName, PortID)]
-hps =
-    [ ("162.105.243.37", PortNumber 809)
-    , ("162.105.243.37", PortNumber 809)
-    , ("162.105.243.37", PortNumber 808)
-    , ("162.105.243.37", PortNumber 808)
-    , ("162.105.243.37", PortNumber 809)
-    , ("162.105.243.37", PortNumber 809)
-    , ("162.105.243.38", PortNumber 809)
-    , ("162.105.243.39", PortNumber 809)
-    , ("162.105.243.40", PortNumber 809)
-    , ("162.105.243.41", PortNumber 809)
-    , ("162.105.243.42", PortNumber 809)
-    ]
+hps = zip (map (\x -> "162.105.243." ++ show x) ([1..255] :: [Int])) (repeat (PortNumber 808)) 
 
 main :: IO ()
 main = do
     whenLoud $ putStrLn "Hello world."
-    whenLoud $ putStrLn "Goodbye world."
     (flags, _, _) <- processOptions
     let timeout = flagTimeout flags
     startTime <- getPOSIXTime
-    mVar <- newEmptyMVar
-    isOpenMVar timeout mVar ("162.105.243.37", PortNumber 809)
-    isOpenMVar timeout mVar ("162.105.243.37", PortNumber 808)
-    isOpenMVar timeout mVar ("162.105.243.32", PortNumber 808)
-    whenLoud $ getPOSIXTime >>= \x -> print (x-startTime)
-    takeMVar mVar >>= print
-    takeMVar mVar >>= print
-    takeMVar mVar >>= print
     checkOpenPorts timeout hps >>= print
-    whenLoud $ getPOSIXTime >>= \x -> print (x-startTime)
+    whenLoud $ getPOSIXTime >>=
+        \x -> putStrLn $ "Total time used: " ++ show (x-startTime)
+    whenLoud $ putStrLn "Goodbye world."
     return ()
 
 checkOpenPorts :: Int -> [(HostName, PortID)] -> IO [HostPortStatus]
 checkOpenPorts timeout xs = do
     mVar <- newEmptyMVar
     forM_ xs $ isOpenMVar timeout mVar
-    forM xs $ \_ -> do
+    ys <- forM xs $ \_ -> do
         x <- takeMVar mVar
         whenLoud $ print x
         return x
+    return $ filter (\(HostPortStatus (_, _, s)) -> s == StatusOpen) ys
 
 isOpenMVar :: Int -> MVar HostPortStatus -> (HostName, PortID) -> IO ()
 isOpenMVar timeout mVar (hostname, port) = create where
@@ -135,4 +117,4 @@ showPort port = case port of
 
 instance Show HostPortStatus where
     show (HostPortStatus (hostname, port, status)) =
-        "< " ++ show hostname ++ ":" ++ showPort port ++ " " ++ show status ++ " >"
+        "< " ++ hostname ++ ":" ++ showPort port ++ " " ++ show status ++ " >"
