@@ -4,6 +4,25 @@ import System.Environment
 import System.Console.GetOpt
 import System.Console.CmdArgs.Verbosity
 
+main :: IO ()
+main = do
+    whenLoud $ putStrLn "Hello world."
+    whenLoud $ putStrLn "Goodbye world."
+    (_, _, _) <- processOptions
+    return ()
+
+processOptions :: IO (Flags, [String], [String])
+processOptions = do
+    allArgs <- getArgs
+    let (actions, args, msgs) = getOpt Permute options allArgs
+        flags = foldr ($) defaultFlags actions
+    if flagQuiet flags then setVerbosity Quiet else return ()
+    if flagVerbose flags then setVerbosity Loud else return ()
+    whenLoud $ putStrLn $ "Flags    : " ++ show flags
+    whenLoud $ putStrLn $ "Args     : " ++ show args
+    whenLoud $ putStrLn $ "Messages : " ++ show msgs
+    return (flags, args, msgs)
+
 data Flags = Flags
     { flagHelp    :: Bool
     , flagVerbose :: Bool
@@ -29,19 +48,6 @@ options =
         (NoArg $ \f -> f {flagQuiet = True})
         "Be quiet."
     ]
-
-main :: IO ()
-main = do
-    allArgs <- getArgs
-    let (actions, args, msgs) = getOpt Permute options allArgs
-        flags = foldr ($) defaultFlags actions
-    if flagQuiet flags then setVerbosity Quiet else return ()
-    if flagVerbose flags then setVerbosity Loud else return ()
-    whenLoud $ putStrLn "Hello World!"
-    whenLoud $ putStrLn $ "Flags    : " ++ show flags
-    whenLoud $ putStrLn $ "Args     : " ++ show args
-    whenLoud $ putStrLn $ "Messages : " ++ show msgs
-    return ()
 
 
 
