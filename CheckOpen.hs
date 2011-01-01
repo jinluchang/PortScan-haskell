@@ -3,9 +3,16 @@ module CheckOpen where
 import System.Console.CmdArgs.Verbosity
 import Control.Concurrent
 import Control.Monad
+import Data.List
 import Network
 
 import HostPortStatus
+
+filterOpenPorts :: Int -> [HostPort] -> IO [HostPort]
+filterOpenPorts timeout xs = do
+    ys <- checkOpenPorts timeout xs
+    return $ map (\(HostPortStatus (h, p, _)) -> HostPort (h, p)) $
+             filter (\(HostPortStatus (_, _, s)) -> s == StatusOpen) ys
 
 checkOpenPorts :: Int -> [HostPort] -> IO [HostPortStatus]
 checkOpenPorts timeout xs = do
@@ -13,9 +20,9 @@ checkOpenPorts timeout xs = do
     forM_ xs $ isOpenMVar timeout mVar
     ys <- forM xs $ \_ -> do
         x <- takeMVar mVar
-        whenLoud $ print x
+        whenLoud $ putStrLn $ show x
         return x
-    return $ filter (\(HostPortStatus (_, _, s)) -> s == StatusOpen) ys
+    return $ sort ys
 
 isOpenMVar :: Int -> MVar HostPortStatus -> HostPort -> IO ()
 isOpenMVar timeout mVar (HostPort (hostname, port)) = create where
@@ -40,8 +47,8 @@ isOpenMVar timeout mVar (HostPort (hostname, port)) = create where
 
 isOpen :: HostPort -> IO Status
 isOpen (HostPort (hostname, port)) = catch
-    (connectTo hostname port >> whenLoud (putStrLn msg) >> return StatusOpen)
-    (\e -> whenLoud (putStrLn $ errMsg e) >> return StatusClose) where
+    (connectTo hostname port >> whenNormal (putStrLn msg) >> return StatusOpen)
+    (\e -> whenNormal (putStrLn $ errMsg e) >> return StatusClose) where
     msg = hostname ++ ":" ++ showPort port ++ " connection succeeded."
     errMsg e = hostname ++ ":" ++ showPort port ++ " connection failed " ++ " : " ++ show e
 
