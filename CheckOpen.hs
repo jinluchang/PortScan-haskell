@@ -8,6 +8,26 @@ import Network
 
 import HostPortStatus
 
+chunkSize :: Int
+chunkSize = 1000
+
+mkChunk :: Int -> [a] -> [[a]]
+mkChunk size xs = unfoldr step xs where
+    step [] = Nothing
+    step ys = Just $ splitAt size ys
+
+filterOpenPortsMany :: Int -> [HostPort] -> IO [HostPort]
+filterOpenPortsMany timeout xs = do
+    ys <- checkOpenPortsMany timeout xs
+    return $ sort $ map (\(HostPortStatus (h, p, _)) -> HostPort (h, p)) $
+             filter (\(HostPortStatus (_, _, s)) -> s == StatusOpen) ys
+
+checkOpenPortsMany :: Int -> [HostPort] -> IO [HostPortStatus]
+checkOpenPortsMany timeout xs = do
+    let xss = mkChunk chunkSize xs
+    yss <- forM xss $ checkOpenPorts timeout
+    return $ concat yss
+
 filterOpenPorts :: Int -> [HostPort] -> IO [HostPort]
 filterOpenPorts timeout xs = do
     ys <- checkOpenPorts timeout xs

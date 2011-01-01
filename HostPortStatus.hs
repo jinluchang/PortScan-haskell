@@ -10,8 +10,9 @@ newtype HostPortStatus = HostPortStatus (HostName, PortID, Status)
 data Status = StatusOpen | StatusClose | StatusTimeout
     deriving (Show, Eq, Ord)
 
-hps :: [HostPort]
-hps = parseHostPortIPv4 "162.105.243.0/24" (PortNumber $ fromIntegral (1080::Int))
+parseHostsPortsIPv4 :: [String] -> [PortID] -> [HostPort]
+parseHostsPortsIPv4 subnets ports = sort $ concat
+    [parseHostPortIPv4 subnet port | subnet <- subnets, port <-ports]
 
 parseHostPortIPv4 :: String -> PortID -> [HostPort]
 parseHostPortIPv4 subnet port = map (\x -> HostPort (x, port)) $
