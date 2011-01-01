@@ -4,14 +4,9 @@ import System.Environment
 import System.Console.GetOpt
 import System.Console.CmdArgs.Verbosity
 import Data.Time.Clock.POSIX
-import Control.Concurrent
-import Control.Monad
-import Network
 
-data Status = StatusOpen | StatusClose | StatusTimeout
-    deriving (Show, Eq)
-
-newtype HostPortStatus = HostPortStatus (HostName, PortID, Status)
+import HostPortStatus
+import CheckOpen
 
 defaultFlags :: Flags
 defaultFlags = Flags
@@ -20,9 +15,6 @@ defaultFlags = Flags
     , flagQuiet = False
     , flagTimeout = 1000000
     }
-
-hps :: [(HostName, PortID)]
-hps = zip (map (\x -> "162.105.243." ++ show x) ([1..255] :: [Int])) (repeat (PortNumber 808)) 
 
 main :: IO ()
 main = do
@@ -35,44 +27,6 @@ main = do
         \x -> putStrLn $ "Total time used: " ++ show (x-startTime)
     whenLoud $ putStrLn "Goodbye world."
     return ()
-
-checkOpenPorts :: Int -> [(HostName, PortID)] -> IO [HostPortStatus]
-checkOpenPorts timeout xs = do
-    mVar <- newEmptyMVar
-    forM_ xs $ isOpenMVar timeout mVar
-    ys <- forM xs $ \_ -> do
-        x <- takeMVar mVar
-        whenLoud $ print x
-        return x
-    return $ filter (\(HostPortStatus (_, _, s)) -> s == StatusOpen) ys
-
-isOpenMVar :: Int -> MVar HostPortStatus -> (HostName, PortID) -> IO ()
-isOpenMVar timeout mVar (hostname, port) = create where
-    create = do
-        lock <- newMVar True
-        threadId <- forkIO $ check lock
-        _ <- forkIO $ daemon lock threadId
-        return ()
-    daemon lock threadId = do
-        threadDelay timeout
-        killThread threadId
-        fill lock StatusTimeout
-    check lock = do
-        s <- isOpen hostname port
-        _ <- forkIO $ fill lock s
-        return ()
-    fill lock status = do
-        isLock <- tryTakeMVar lock
-        if isLock /= Nothing
-            then putMVar mVar $ HostPortStatus (hostname, port, status)
-            else return ()
-
-isOpen :: HostName -> PortID -> IO Status
-isOpen hostname port = catch
-    (connectTo hostname port >> whenLoud (putStrLn msg) >> return StatusOpen)
-    (\e -> whenLoud (putStrLn $ errMsg e) >> return StatusClose) where
-    msg = hostname ++ ":" ++ showPort port ++ " connection succeeded."
-    errMsg e = hostname ++ ":" ++ showPort port ++ " connection failed " ++ " : " ++ show e
 
 processOptions :: IO (Flags, [String], [String])
 processOptions = do
@@ -109,12 +63,3 @@ options =
         "Timeout Value"
     ]
 
-showPort :: PortID -> String
-showPort port = case port of
-    PortNumber x -> show x
-    Service x -> x
-    UnixSocket x -> x
-
-instance Show HostPortStatus where
-    show (HostPortStatus (hostname, port, status)) =
-        "< " ++ hostname ++ ":" ++ showPort port ++ " " ++ show status ++ " >"
