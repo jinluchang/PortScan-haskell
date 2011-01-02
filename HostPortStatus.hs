@@ -65,11 +65,11 @@ comparePort (UnixSocket _) _ = LT
 
 instance Show HostPort where
     show (HostPort (hostname, port)) =
-        "<" ++ hostname ++ ":" ++ showPort port ++ ">"
+        hostname ++ ":" ++ showPort port
 
 instance Show HostPortStatus where
     show (HostPortStatus (hostname, port, status)) =
-        "{" ++ hostname ++ ":" ++ showPort port ++ " " ++ show status ++ "}"
+        hostname ++ ":" ++ showPort port ++ " " ++ show status
 
 instance Eq HostPort where
      HostPort (hostname1, port1) == HostPort (hostname2, port2) =
