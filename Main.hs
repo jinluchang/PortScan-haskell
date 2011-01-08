@@ -1,6 +1,7 @@
 module Main where
 
 import System.Environment
+import System.Exit
 import System.Console.GetOpt
 import System.Console.CmdArgs.Verbosity
 import Data.Time.Clock.POSIX
@@ -67,6 +68,13 @@ main = do
     let timeout = flagTimeout flags
         subnets = flagSubnets flags
         ports = map (PortNumber . fromIntegral) $ flagPorts flags
+    if not $ flagHelp flags
+        then return ()
+        else do
+            putStrLn $ flip usageInfo options $
+                "Usage: port-scan [options]\n" ++
+                "Scan open ports on specified subnets and ports.\n"
+            exitSuccess
     startTime <- getPOSIXTime
     hostPorts <- filterOpenPortsMany timeout (parseHostsPortsIPv4 subnets ports)
     if flagWithAllPorts flags
