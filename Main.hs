@@ -18,15 +18,17 @@ defaultFlags = Flags
     , flagTimeout = 300000
     , flagSubnets = ["162.105.243.0/24"]
     , flagPorts = [808]
+    , flagWithAllPorts = False
     }
 
 data Flags = Flags
-    { flagHelp       :: Bool
-    , flagVerbose    :: Bool
-    , flagQuiet      :: Bool
-    , flagTimeout    :: Int
-    , flagSubnets    :: [String]
-    , flagPorts      :: [Int]
+    { flagHelp           :: Bool
+    , flagVerbose        :: Bool
+    , flagQuiet          :: Bool
+    , flagTimeout        :: Int
+    , flagSubnets        :: [String]
+    , flagPorts          :: [Int]
+    , flagWithAllPorts   :: Bool
     } deriving (Show, Eq, Ord)
 
 options :: [OptDescr (Flags -> Flags)]
@@ -47,9 +49,16 @@ options =
         (flip ReqArg "SUBNETS" $ \s f -> f {flagSubnets = splitWith ',' s})
         "Subnet range, seperated by comma."
     , Option "p"   ["ports"]
-        (flip ReqArg "PORTS" $ \s f -> f {flagPorts = map read $ splitWith ',' s})
+        (flip ReqArg "PORTS" $ \s f -> f {flagPorts = readPorts $ splitWith ',' s})
         "Ports to check whether is open, seperated by comma."
-    ]
+    , Option "a"   ["with-all-ports"]
+        (NoArg $ \f -> f {flagWithAllPorts = True})
+        "Only show results that opens all ports specified."
+    ] where
+        readPorts ps = concat $ map readP ps
+        readP str = if end == []
+            then [read start]
+            else [read start .. (read . tail) end] where (start, end) = break (=='-') str
 
 main :: IO ()
 main = do
@@ -60,7 +69,9 @@ main = do
         ports = map (PortNumber . fromIntegral) $ flagPorts flags
     startTime <- getPOSIXTime
     hostPorts <- filterOpenPortsMany timeout (parseHostsPortsIPv4 subnets ports)
-    putStrLn $ showHostPorts hostPorts
+    if flagWithAllPorts flags
+        then putStrLn $ showHostNames $ filterAllPorts (length ports) hostPorts
+        else putStrLn $ showHostPorts hostPorts
     whenLoud $ getPOSIXTime >>=
         \x -> putStrLn $ "Total time used: " ++ show (x-startTime)
     whenLoud $ putStrLn "Goodbye world."
@@ -70,6 +81,11 @@ showHostPorts :: [HostPort] -> String
 showHostPorts xs =
     "Open HostPorts:\n" ++
     (concat $ intersperse "\n" $ map show xs)
+
+showHostNames:: [HostName] -> String
+showHostNames xs =
+    "Open HostPorts:\n" ++
+    (concat $ intersperse "\n" xs)
 
 processOptions :: IO (Flags, [String], [String])
 processOptions = do

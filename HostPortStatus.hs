@@ -10,6 +10,13 @@ newtype HostPortStatus = HostPortStatus (HostName, PortID, Status)
 data Status = StatusOpen | StatusClose | StatusTimeout
     deriving (Show, Eq, Ord)
 
+
+-- filter [HostPort] to only include HostName which open all ports
+filterAllPorts :: Int -> [HostPort] -> [HostName]
+filterAllPorts n hps = map head $ filter (\hs -> n == length hs) hss where
+    hss = group $ map hostName hps
+    hostName (HostPort (h, _)) = h
+
 parseHostsPortsIPv4 :: [String] -> [PortID] -> [HostPort]
 parseHostsPortsIPv4 subnets ports = sort $ concat
     [parseHostPortIPv4 subnet port | subnet <- subnets, port <-ports]
@@ -19,8 +26,10 @@ parseHostPortIPv4 subnet port = map (\x -> HostPort (x, port)) $
     parseSubnetIPv4 subnet
 
 parseSubnetIPv4 :: String -> [HostName]
-parseSubnetIPv4 subnet = subnetIPv4 hostname (read lenStr) where
-    (hostname, _:lenStr) = break (=='/') subnet
+parseSubnetIPv4 subnet = if lenStr == []
+    then [hostname]
+    else subnetIPv4 hostname $ read . tail $ lenStr where
+        (hostname, lenStr) = break (=='/') subnet
 
 subnetIPv4 :: HostName -> Int -> [HostName]
 subnetIPv4 start len = map hostNameFromIntegerIPv4 $
@@ -55,11 +64,13 @@ showPort port = case port of
     UnixSocket x -> x
 
 comparePort :: PortID -> PortID -> Ordering
-comparePort (PortNumber x1) (PortNumber x2) = compare x1 x2
+comparePort (PortNumber x1) (PortNumber x2) = compare x1' x2' where
+    x1' = fromIntegral x1 :: Int
+    x2' = fromIntegral x2 :: Int
 comparePort (Service x1) (Service x2) = compare x1 x2
 comparePort (UnixSocket x1) (UnixSocket x2) = compare x1 x2
 comparePort (PortNumber _) _ = GT
-comparePort (Service _) (PortNumber _) = LT
+comparePort _ (PortNumber _) = LT
 comparePort (Service _) _ = GT
 comparePort (UnixSocket _) _ = LT
 
