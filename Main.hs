@@ -92,7 +92,7 @@ showHostPorts xs =
 
 showHostNames:: [HostName] -> String
 showHostNames xs =
-    "Open HostPorts:\n" ++
+    "Open HostNames:\n" ++
     (concat $ intersperse "\n" xs)
 
 processOptions :: IO (Flags, [String], [String])
