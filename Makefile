@@ -3,9 +3,12 @@ target = /home/frank/bin/port-scan
 
 hc = ghc -Wall -O2
 main = Main.hs
-source = *.hs
+source = Main.hs CheckOpen.hs HostPortStatus.hs
 
 all : $(name)
+
+run : $(name)
+	./$(name)
 
 install : $(target)
 
