@@ -1,0 +1,40 @@
+name: port-scan
+version: 0.0.1
+license: GPL-3
+license-file: COPYING
+copyright: (c) Frank Waterret
+author: Frank Waterret
+maintainer: Frank Waterret <waterret@gmail.com>
+bug-reports: mailto:waterret@gmail.com
+stability: unstable
+homepage: http://waterret.oicp.net/unavailable
+synopsis: find open ports in several subnets.
+category: Console, Text
+cabal-version: >= 1.6
+build-type: Simple
+
+Description:
+  port-scan program can find open ports in several subnets. It is written
+  in Haskell and make use of forkIO to create multiple threads to test
+  a lot of ports simultaneously. This project is not mature yet.
+  Please note that the website of the program is still not working as
+  expected. If you have some problems, contact the author directly
+  through email instead.
+
+source-repository head
+  type:     git
+  location: http://waterret.oicp.net/unavailable
+
+flag threaded
+  default: False
+
+executable port-scan
+  hs-source-dirs: src
+  main-is: Main.hs
+  build-depends: base >= 4.2 && < 5,
+                 cmdargs >= 0.6.5,
+                 network >= 2.2,
+                 time >= 1.1
+  if flag(threaded)
+     ghc-options: -threaded
+

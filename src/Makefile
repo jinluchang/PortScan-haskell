@@ -1,5 +1,5 @@
 name = port-scan
-target = /home/frank/bin/port-scan
+target = $(HOME)/bin/port-scan
 
 hc = ghc -Wall -O2
 main = Main.hs
