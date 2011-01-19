@@ -7,9 +7,9 @@ author: Frank Waterret
 maintainer: Frank Waterret <waterret@gmail.com>
 bug-reports: mailto:waterret@gmail.com
 stability: unstable
-homepage: http://waterret.oicp.net/unavailable
+homepage: http://code.google.com/p/port-scan-haskell/
 synopsis: find open ports in several subnets.
-category: Console, Text
+category: Console, Network
 cabal-version: >= 1.6
 build-type: Simple
 
@@ -22,8 +22,8 @@ Description:
   through email instead.
 
 source-repository head
-  type:     git
-  location: http://waterret.oicp.net/unavailable
+  type:     svn
+  location: http://port-scan-haskell.googlecode.com/svn/
 
 flag threaded
   default: False
