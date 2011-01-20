@@ -4,6 +4,7 @@ import System.Console.CmdArgs.Verbosity
 import Control.Concurrent
 import Control.Monad
 import Data.List
+import System.IO
 import Network
 
 import HostPortStatus
@@ -67,7 +68,7 @@ isOpenMVar timeout mVar (HostPort (hostname, port)) = create where
 
 isOpen :: HostPort -> IO Status
 isOpen (HostPort (hostname, port)) = catch
-    (connectTo hostname port >> whenNormal (putStrLn msg) >> return StatusOpen)
+    (connectTo hostname port >>= hClose >> whenNormal (putStrLn msg) >> return StatusOpen)
     (\e -> whenNormal (putStrLn $ errMsg e) >> return StatusClose) where
     msg = show (HostPort (hostname, port)) ++ " connection succeeded."
     errMsg e = show (HostPort (hostname, port)) ++ " connection failed " ++ " : " ++ show e
