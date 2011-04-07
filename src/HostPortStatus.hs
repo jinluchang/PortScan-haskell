@@ -19,7 +19,7 @@ filterAllPorts n hps = map head $ filter (\hs -> n == length hs) hss where
 
 parseHostsPortsIPv4 :: [String] -> [PortID] -> [HostPort]
 parseHostsPortsIPv4 subnets ports = sort $ concat
-    [parseHostPortIPv4 subnet port | subnet <- subnets, port <-ports]
+    [parseHostPortIPv4 subnet port | port <-ports, subnet <- subnets]
 
 parseHostPortIPv4 :: String -> PortID -> [HostPort]
 parseHostPortIPv4 subnet port = map (\x -> HostPort (x, port)) $
@@ -36,7 +36,7 @@ subnetIPv4 start len = map hostNameFromIntegerIPv4 $
     intSubnetIPv4 (integerFromHostNameIPv4 start) len
 
 intSubnetIPv4 :: Integer -> Int -> [Integer]
-intSubnetIPv4 start len | len > 15 && 32 > len = [(start+1)..(end-1)] where
+intSubnetIPv4 start len | len > 15 && 32 >= len = [start..(end-1)] where
     end = start + 2^(32-len)
 
 intSubnetIPv4 _ _ = error $ "Subnet is too large."
