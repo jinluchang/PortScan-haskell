@@ -3,11 +3,11 @@ module Main where
 import System.Environment
 import System.Exit
 import System.Console.GetOpt
-import System.Console.CmdArgs.Verbosity
 import Data.Time.Clock.POSIX
 import Data.List
 import Network
 
+import Verbosity
 import HostPortStatus
 import CheckOpen
 
@@ -17,8 +17,8 @@ defaultFlags = Flags
     , flagVerbose = False
     , flagQuiet = False
     , flagTimeout = 300000
-    , flagSubnets = ["162.105.243.0/24"]
-    , flagPorts = [808]
+    , flagSubnets = ["127.0.0.1"]
+    , flagPorts = [1..1000]
     , flagWithAllPorts = False
     }
 
