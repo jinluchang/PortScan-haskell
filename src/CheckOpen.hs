@@ -1,6 +1,5 @@
 module CheckOpen where
 
-import System.Console.CmdArgs.Verbosity
 import Control.Concurrent
 import Control.Monad
 import Data.List
@@ -8,6 +7,7 @@ import System.IO
 import Network
 
 import HostPortStatus
+import Verbosity
 
 chunkSize :: Int
 chunkSize = 1000
